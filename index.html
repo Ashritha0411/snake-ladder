@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Snake and Ladder Game</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: #f0f0f0;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(10, 50px);
+      grid-template-rows: repeat(10, 50px);
+      background: url('ladder.jpg');
+      background-repeat: no-repeat;
+      background-size: 500px 500px;
+      position: relative;
+      width: 500px;
+      height: 500px;
+    }
+
+    .container .tile {
+      border: 1px solid black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 12px;
+      color: #333;
+      position: relative;
+    }
+
+    #diceContainer {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    #dice {
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    #dice:hover {
+      transform: scale(1.1);
+    }
+
+    .token {
+      width: 15px;
+      height: 15px;
+      position: absolute;
+      border-radius: 50%;
+    }
+
+    .player1 {
+      background-color: green;
+      top: 5px;
+      left: 5px;
+    }
+
+    .player2 {
+      background-color: blue;
+      top: 25px;
+      left: 25px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container" id="board"></div>
+
+  <!-- Dice section -->
+  <div id="diceContainer">
+    <img id="dice" src="https://upload.wikimedia.org/wikipedia/commons/2/2c/Alea_1.png"
+         alt="dice" width="80" height="80" onclick="roll()" />
+    <audio id="diceSound" src="mouse-click-sound-233951.mp3" preload="auto"></audio>
+  </div>
+
+  <script>
+    const board = document.getElementById('board');
+
+    // Generate tiles 100 to 1 in zigzag pattern
+    for (let row = 9; row >= 0; row--) {
+      const isEven = row % 2 === 0;
+      for (let col = 0; col < 10; col++) {
+        const index = row * 10 + (isEven ? col + 1 : 10 - col);
+        const div = document.createElement('div');
+        div.className = `tile tile${index}`;
+        div.textContent = index;
+        board.appendChild(div);
+      }
+    }
+
+    // Game logic
+    let player1Pos = 1;
+    let player2Pos = 1;
+    let currentPlayer = 1;
+    let gameOver = false;
+
+    const player1Div = document.createElement('div');
+    player1Div.classList.add('token', 'player1');
+
+    const player2Div = document.createElement('div');
+    player2Div.classList.add('token', 'player2');
+
+    // Initial positions
+    updatePlayerPosition(1, player1Div);
+    updatePlayerPosition(1, player2Div);
+
+    function roll() {
+      if (gameOver) return;
+
+      const dice = document.getElementById("dice");
+      const diceSound = document.getElementById("diceSound");
+
+      // Stop the sound if it was playing from the previous roll
+      diceSound.pause();
+      diceSound.currentTime = 0;
+      diceSound.play();
+
+      // Roll the dice
+      const finalNumber = Math.floor(Math.random() * 6) + 1;
+      dice.src = `https://upload.wikimedia.org/wikipedia/commons/${getDiceImage(finalNumber)}`;
+
+      if (currentPlayer === 1) {
+        if (player1Pos + finalNumber <= 100) {
+          player1Pos += finalNumber;
+          player1Pos = apply(player1Pos);
+          updatePlayerPosition(player1Pos, player1Div);
+          checkWin(player1Pos, 1);
+        }
+        currentPlayer = 2;
+      } else {
+        if (player2Pos + finalNumber <= 100) {
+          player2Pos += finalNumber;
+          player2Pos = apply(player2Pos);
+          updatePlayerPosition(player2Pos, player2Div);
+          checkWin(player2Pos, 2);
+        }
+        currentPlayer = 1;
+      }
+    }
+
+    function getDiceImage(num) {
+      const paths = {
+        1: "2/2c/Alea_1.png",
+        2: "b/b8/Alea_2.png",
+        3: "2/2f/Alea_3.png",
+        4: "8/8d/Alea_4.png",
+        5: "5/55/Alea_5.png",
+        6: "f/f4/Alea_6.png"
+      };
+      return paths[num];
+    }
+
+    function apply(position) {
+      const ladders = {
+        4: 25, 13: 46, 33: 49, 42: 63,
+        50: 69, 62: 81, 74: 92
+      };
+      const snakes = {
+        40: 3, 27: 5, 43: 18, 54: 31,
+        66: 45, 76: 58, 89: 53, 99: 41
+      };
+      if (ladders[position]) return ladders[position];
+      if (snakes[position]) return snakes[position];
+      return position;
+    }
+
+    function updatePlayerPosition(position, tokenDiv) {
+      const tile = document.querySelector(`.tile${position}`);
+      if (tile) tile.appendChild(tokenDiv);
+    }
+
+    function checkWin(position, player) {
+      if (position === 100) {
+        gameOver = true;
+        setTimeout(() => {
+          alert(`Player ${player} wins!`);
+        }, 200);
+      }
+    }
+  </script>
+
+</body>
+</html>
